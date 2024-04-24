@@ -11,6 +11,7 @@ use async_stream::try_stream;
 use bytes::Bytes;
 use futures_util::{stream, Stream, StreamExt};
 use tokio::{runtime::Handle, sync::Mutex, time::Instant};
+use tokio::sync::mpsc::{Sender, Receiver};
 
 use crate::{
     asynchronous::{callback::OptionalCallback, transport::AsyncTransportType},
@@ -30,10 +31,13 @@ pub struct Socket {
     on_open: OptionalCallback<()>,
     on_packet: OptionalCallback<Packet>,
     connected: Arc<AtomicBool>,
+    sid_received: Arc<AtomicBool>,
     last_ping: Arc<Mutex<Instant>>,
     last_pong: Arc<Mutex<Instant>>,
     connection_data: Arc<HandshakePacket>,
     max_ping_timeout: u64,
+    sid_tx: Arc<Mutex<Sender<bool>>>,
+    sid_rx: Arc<Mutex<Receiver<bool>>>
 }
 
 impl Socket {
@@ -47,6 +51,9 @@ impl Socket {
         on_packet: OptionalCallback<Packet>,
     ) -> Self {
         let max_ping_timeout = handshake.ping_interval + handshake.ping_timeout;
+        let (tx, rx) = tokio::sync::mpsc::channel(1);
+        let sid_tx = Arc::new(Mutex::new(tx));
+        let sid_rx = Arc::new(Mutex::new(rx));
 
         Socket {
             handle: Handle::current(),
@@ -58,11 +65,35 @@ impl Socket {
             transport: Arc::new(Mutex::new(transport.clone())),
             transport_raw: transport,
             connected: Arc::new(AtomicBool::default()),
+            sid_received : Arc::new(AtomicBool::default()),
             last_ping: Arc::new(Mutex::new(Instant::now())),
             last_pong: Arc::new(Mutex::new(Instant::now())),
             connection_data: Arc::new(handshake),
             max_ping_timeout,
+            sid_tx,
+            sid_rx
         }
+    }
+
+      // check for sid after first connect and return sid
+    // if do not check first server's client return sid value then
+    // client's fast emit(after connect().await) sometimes failed.  
+    pub async fn check_incoming_sid_packet(&self, data:Bytes) -> Result<()>
+    {
+        //check sid packet
+        let local_data =  String::from_utf8_lossy(&data[0..15]);
+        if local_data.contains("sid") {
+            self.sid_received.store(true, Ordering::Release);
+            let _ = self.sid_tx.lock().await.send(true).await;
+        }else {
+            self.sid_received.store(false, Ordering::Release);
+        }
+        Ok(())
+    }
+
+    pub async fn wait_connect_incoming_sid(&self) -> Result<()> {
+        self.sid_rx.lock().await.recv().await;
+        Ok(())
     }
 
     /// Opens the connection to a specified server. The first Pong packet is sent
@@ -95,6 +126,11 @@ impl Socket {
             }
             PacketId::Message => {
                 self.handle_data(packet.data.clone());
+
+                if !self.is_exsit_sid() {
+                    let _ = self.check_incoming_sid_packet(packet.data.clone()).await;
+                }
+
             }
             PacketId::Close => {
                 self.handle_close();
@@ -198,6 +234,10 @@ impl Socket {
     // Check if the underlying transport client is connected.
     pub(crate) fn is_connected(&self) -> bool {
         self.connected.load(Ordering::Acquire)
+    }
+
+    pub(crate) fn is_exsit_sid(&self) -> bool {
+        self.sid_received.load(Ordering::Acquire)
     }
 
     pub(crate) async fn pinged(&self) {

@@ -39,6 +39,11 @@ impl Client {
         self.socket.connect().await
     }
 
+     //[KDJ]
+     pub async fn wait_connect_incoming_sid(&self) -> Result<()> {
+        self.socket.wait_connect_incoming_sid().await
+    }
+
     /// Disconnects the connection.
     pub async fn disconnect(&self) -> Result<()> {
         self.socket.disconnect().await
