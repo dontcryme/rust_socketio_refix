@@ -49,11 +49,6 @@ impl Socket {
         Ok(())
     }
 
-    //[KDJ]
-    pub async fn wait_connect_incoming_sid(&self) -> Result<()> {
-        self.engine_client.wait_connect_incoming_sid().await?;
-        Ok(())
-    }
 
     /// Disconnects from the server by sending a socket.io `Disconnect` packet. This results
     /// in the underlying engine.io transport to get closed as well.
