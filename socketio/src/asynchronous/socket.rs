@@ -49,7 +49,7 @@ impl Socket {
         Ok(())
     }
 
-  //[KDJ]
+    //[KDJ]
     pub async fn wait_connect_incoming_sid(&self) -> Result<()> {
         self.engine_client.wait_connect_incoming_sid().await;
         Ok(())

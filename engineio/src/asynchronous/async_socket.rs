@@ -10,8 +10,8 @@ use std::{
 use async_stream::try_stream;
 use bytes::Bytes;
 use futures_util::{stream, Stream, StreamExt};
+use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::{runtime::Handle, sync::Mutex, time::Instant};
-use tokio::sync::mpsc::{Sender, Receiver};
 
 use crate::{
     asynchronous::{callback::OptionalCallback, transport::AsyncTransportType},
@@ -37,7 +37,7 @@ pub struct Socket {
     connection_data: Arc<HandshakePacket>,
     max_ping_timeout: u64,
     sid_tx: Arc<Mutex<Sender<bool>>>,
-    sid_rx: Arc<Mutex<Receiver<bool>>>
+    sid_rx: Arc<Mutex<Receiver<bool>>>,
 }
 
 impl Socket {
@@ -65,27 +65,26 @@ impl Socket {
             transport: Arc::new(Mutex::new(transport.clone())),
             transport_raw: transport,
             connected: Arc::new(AtomicBool::default()),
-            sid_received : Arc::new(AtomicBool::default()),
+            sid_received: Arc::new(AtomicBool::default()),
             last_ping: Arc::new(Mutex::new(Instant::now())),
             last_pong: Arc::new(Mutex::new(Instant::now())),
             connection_data: Arc::new(handshake),
             max_ping_timeout,
             sid_tx,
-            sid_rx
+            sid_rx,
         }
     }
 
-      // check for sid after first connect and return sid
+    // check for sid after first connect and return sid
     // if do not check first server's client return sid value then
-    // client's fast emit(after connect().await) sometimes failed.  
-    pub async fn check_incoming_sid_packet(&self, data:Bytes) -> Result<()>
-    {
+    // client's fast emit(after connect().await) sometimes failed.
+    pub async fn check_incoming_sid_packet(&self, data: Bytes) -> Result<()> {
         //check sid packet
-        let local_data =  String::from_utf8_lossy(&data[0..15]);
+        let local_data = String::from_utf8_lossy(&data[0..15]);
         if local_data.contains("sid") {
             self.sid_received.store(true, Ordering::Release);
             let _ = self.sid_tx.lock().await.send(true).await;
-        }else {
+        } else {
             self.sid_received.store(false, Ordering::Release);
         }
         Ok(())
@@ -130,7 +129,6 @@ impl Socket {
                 if !self.is_exsit_sid() {
                     let _ = self.check_incoming_sid_packet(packet.data.clone()).await;
                 }
-
             }
             PacketId::Close => {
                 self.handle_close();
