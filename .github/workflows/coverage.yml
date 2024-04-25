@@ -49,9 +49,10 @@ jobs:
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
 
       - name: Upload to codecov.io
-        uses: codecov/codecov-action@v1.5.2
+        uses: codecov/codecov-action@v4.0.1
         with:
-          token: ${{secrets.CODECOV_TOKEN}}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: dontcryme/rust_socketio_refix
           files: lcov.info
           fail_ci_if_error: true
 
