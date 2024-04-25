@@ -30,6 +30,7 @@ async-stream = "0.3.5"
 thiserror = "1.0"
 native-tls = "0.2.11"
 url = "2.4.1"
+memchr = "2.7.2"
 
 [dev-dependencies]
 criterion = { version = "0.5.1", features = ["async_tokio"] }

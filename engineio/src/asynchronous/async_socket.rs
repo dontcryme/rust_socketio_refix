@@ -12,6 +12,7 @@ use bytes::Bytes;
 use futures_util::{stream, Stream, StreamExt};
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::{runtime::Handle, sync::Mutex, time::Instant};
+use memchr::memchr;
 
 use crate::{
     asynchronous::{callback::OptionalCallback, transport::AsyncTransportType},
@@ -80,8 +81,7 @@ impl Socket {
     // client's fast emit(after connect().await) sometimes failed.
     pub async fn check_incoming_sid_packet(&self, data: Bytes) -> Result<()> {
         //check sid packet
-        let local_data = String::from_utf8_lossy(&data[0..15]);
-        if local_data.contains("sid") {
+        if let Some(_pos) = memchr(b's', &data).and_then(|pos| memchr(b'i', &data[pos + 1..]).and_then(|offset| memchr(b'd', &data[pos + offset + 2..]))) {
             self.sid_received.store(true, Ordering::Release);
             let _ = self.sid_tx.lock().await.send(true).await;
         } else {
