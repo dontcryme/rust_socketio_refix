@@ -42,11 +42,12 @@ impl Packet {
     ) -> Result<Packet> {
         match payload {
             Payload::Binary(bin_data) => Ok(Packet::new(
-                if id.is_some() && id.unwrap() == PacketId::Event as i32{
-                    PacketId::BinaryEvent
-                } else {
-                    PacketId::BinaryAck
-                },
+                // if id.is_some() && id.unwrap() == PacketId::Event as i32{
+                //     PacketId::BinaryEvent
+                // } else {
+                //     PacketId::BinaryAck
+                // }
+                PacketId::BinaryEvent,
                 nsp.to_owned(),
                 Some(serde_json::Value::String(event.into()).to_string()),
                 id,
