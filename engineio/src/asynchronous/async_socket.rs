@@ -190,6 +190,7 @@ impl Socket {
             .await?;
 
         self.connected.store(false, Ordering::Release);
+        self.sid_received.store(false, Ordering::Release);
 
         Ok(())
     }
