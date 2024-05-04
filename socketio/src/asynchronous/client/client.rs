@@ -100,7 +100,15 @@ impl Client {
 
         // construct the opening packet
         let auth = self.auth.as_ref().map(|data| data.to_string());
-        let open_packet = Packet::new(PacketId::Connect, self.nsp.clone(), auth, None, 0, None,None);
+        let open_packet = Packet::new(
+            PacketId::Connect,
+            self.nsp.clone(),
+            auth,
+            None,
+            0,
+            None,
+            None,
+        );
 
         self.socket.read().await.send(open_packet).await?;
 
@@ -257,7 +265,6 @@ impl Client {
             .await
     }
 
-
     /// When receive server's emitwithack callback event, invoke socket.ack(..) function can react to server with ack signal
     /// use futures_util::FutureExt;
     /// use rust_socketio::{
@@ -268,10 +275,10 @@ impl Client {
     /// use std::time::Duration;
     /// use std::thread;
     /// use bytes::Bytes;
-    
+    ///
     /// #[tokio::main]
     /// async fn main() {
-        
+    ///
     ///     let callback = |payload: Payload, socket: Client| {
     ///        async move {
     ///           let byte_test = vec![0x01, 0x02];
@@ -280,7 +287,7 @@ impl Client {
     ///         }
     ///         .boxed()
     ///     };
-    
+    ///
     ///     // get a socket that is connected to the admin namespace
     ///     let socket = ClientBuilder::new("http://localhost:4200")
     ///         .namespace("/")
@@ -291,13 +298,13 @@ impl Client {
     ///         .connect()
     ///         .await
     ///         .expect("Connection failed");
-    
-     
+    ///
+    ///
     ///     socket
     ///         .emit("acktest", json_payload)
     ///         .await
     ///         .expect("Server unreachable");
-        
+    ///
     ///     thread::sleep(Duration::from_millis(30000));
     ///     socket.disconnect().await.expect("Disconnect failed");
     /// }
@@ -306,13 +313,8 @@ impl Client {
     where
         D: Into<Payload>,
     {
-        self.socket
-            .read()
-            .await
-            .ack(&self.nsp, data.into())
-            .await
+        self.socket.read().await.ack(&self.nsp, data.into()).await
     }
-
 
     /// Disconnects this client from the server by sending a `socket.io` closing
     /// packet.
@@ -350,8 +352,15 @@ impl Client {
     pub async fn disconnect(&self) -> Result<()> {
         *(self.disconnect_reason.write().await) = DisconnectReason::Manual;
 
-        let disconnect_packet =
-            Packet::new(PacketId::Disconnect, self.nsp.clone(), None, None, 0, None, None);
+        let disconnect_packet = Packet::new(
+            PacketId::Disconnect,
+            self.nsp.clone(),
+            None,
+            None,
+            0,
+            None,
+            None,
+        );
 
         self.socket.read().await.send(disconnect_packet).await?;
         self.socket.read().await.disconnect().await?;

@@ -32,7 +32,6 @@ pub struct Packet {
 }
 
 impl Packet {
-
     //below function need to ack_id information
     //ack function retrun to server
     #[inline]
@@ -53,7 +52,6 @@ impl Packet {
                 1,
                 Some(vec![bin_data]),
                 None,
-
             )),
             #[allow(deprecated)]
             Payload::String(str_data) => {
@@ -74,7 +72,6 @@ impl Packet {
                 ))
             }
             Payload::Text(data) => {
-
                 let payload = serde_json::Value::Array(data).to_string();
 
                 Ok(Packet::new(
@@ -88,7 +85,6 @@ impl Packet {
                 ))
             }
         }
-
     }
 
     /// Returns a packet for a payload, could be used for both binary and non binary
@@ -742,7 +738,6 @@ mod test {
         )
     }
 
-
     #[test]
     fn ack_from_payload_binary() {
         let payload = Payload::Binary(Bytes::from_static(&[0, 4, 9]));
@@ -809,5 +804,4 @@ mod test {
             }
         )
     }
-
 }

@@ -14,7 +14,7 @@ use std::{
     fmt::Debug,
     pin::Pin,
     sync::{
-        atomic::{AtomicI32, AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicI32, Ordering},
         Arc,
     },
 };
@@ -99,12 +99,17 @@ impl Socket {
         self.send(socket_packet).await
     }
 
-     /// Emits to connected other side with given data 
-     pub async fn ack(&self, nsp: &str,  data: Payload) -> Result<()> {
+    /// Emits to connected other side with given data
+    pub async fn ack(&self, nsp: &str, data: Payload) -> Result<()> {
         if self.ack_id.load(Ordering::Acquire) != -1 {
-            let socket_packet = Packet::ack_from_payload(data, Event::Message, nsp, Some(self.ack_id.load(Ordering::Acquire)))?;
+            let socket_packet = Packet::ack_from_payload(
+                data,
+                Event::Message,
+                nsp,
+                Some(self.ack_id.load(Ordering::Acquire)),
+            )?;
             self.send(socket_packet).await
-        }else {
+        } else {
             Ok(())
         }
     }
@@ -157,7 +162,7 @@ impl Socket {
 
         if let Some(ack_id) = socket_packet.id {
             socket_packet.ack_id = Some(ack_id);
-        }else {
+        } else {
             socket_packet.ack_id = Some(-1);
         }
 

@@ -75,7 +75,15 @@ impl RawClient {
         let auth = self.auth.as_ref().map(|data| data.to_string());
 
         // construct the opening packet
-        let open_packet = Packet::new(PacketId::Connect, self.nsp.clone(), auth, None, 0, None,None);
+        let open_packet = Packet::new(
+            PacketId::Connect,
+            self.nsp.clone(),
+            auth,
+            None,
+            0,
+            None,
+            None,
+        );
 
         self.socket.send(open_packet)?;
 
@@ -142,8 +150,15 @@ impl RawClient {
     ///
     /// ```
     pub fn disconnect(&self) -> Result<()> {
-        let disconnect_packet =
-            Packet::new(PacketId::Disconnect, self.nsp.clone(), None, None, 0, None, None);
+        let disconnect_packet = Packet::new(
+            PacketId::Disconnect,
+            self.nsp.clone(),
+            None,
+            None,
+            0,
+            None,
+            None,
+        );
 
         // TODO: logging
         let _ = self.socket.send(disconnect_packet);
