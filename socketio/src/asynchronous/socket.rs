@@ -24,16 +24,20 @@ pub(crate) struct Socket {
     engine_client: Arc<EngineClient>,
     connected: Arc<AtomicBool>,
     generator: StreamGenerator<Packet>,
+    ack_id: Arc<AtomicI32>,
 }
 
 impl Socket {
     /// Creates an instance of `Socket`.
     pub(super) fn new(engine_client: EngineClient) -> Result<Self> {
         let connected = Arc::new(AtomicBool::default());
+        let ack_id = Arc::new(AtomicI32::new(-1));
+
         Ok(Socket {
             engine_client: Arc::new(engine_client.clone()),
             connected: connected.clone(),
-            generator: StreamGenerator::new(Self::stream(engine_client, connected)),
+            ack_id: ack_id.clone(),
+            generator: StreamGenerator::new(Self::stream(engine_client, connected, ack_id)),
         })
     }
 
@@ -108,6 +112,7 @@ impl Socket {
     fn stream(
         client: EngineClient,
         is_connected: Arc<AtomicBool>,
+        ack_id: Arc<AtomicI32>,
     ) -> Pin<Box<impl Stream<Item = Result<Packet>> + Send>> {
         Box::pin(try_stream! {
                 for await received_data in client.clone() {
@@ -117,6 +122,7 @@ impl Socket {
                         || packet.packet_id == EnginePacketId::MessageBinary
                     {
                         let packet = Self::handle_engineio_packet(packet, client.clone()).await?;
+                        ack_id.store( packet.ack_id.unwrap() , Ordering::Release);
                         Self::handle_socketio_packet(&packet, is_connected.clone());
 
                         yield packet;
@@ -148,6 +154,12 @@ impl Socket {
         mut client: EngineClient,
     ) -> Result<Packet> {
         let mut socket_packet = Packet::try_from(&packet.data)?;
+
+        if let Some(ack_id) = socket_packet.id {
+            socket_packet.ack_id = Some(ack_id);
+        }else {
+            socket_packet.ack_id = Some(-1);
+        }
 
         // Only handle attachments if there are any
         if socket_packet.attachment_count > 0 {
