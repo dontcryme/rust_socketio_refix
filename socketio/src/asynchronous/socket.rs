@@ -14,7 +14,7 @@ use std::{
     fmt::Debug,
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicI32, AtomicBool, Ordering},
         Arc,
     },
 };
