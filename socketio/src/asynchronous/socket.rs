@@ -69,8 +69,8 @@ impl Socket {
             self.connected.store(false, Ordering::Release);
         }
 
-        if self.ack_id.load(Ordering::Acquire) {
-            self.ack_id.store(Some(-1), Ordering::Release);
+        if self.ack_id.load(Ordering::Acquire) != -1 {
+            self.ack_id.store(-1, Ordering::Release);
         }
 
         Ok(())
