@@ -267,6 +267,9 @@ impl Client {
 
     /// When receive server's emitwithack callback event, invoke socket.ack(..) function can react to server with ack signal
     /// use futures_util::FutureExt;
+    ///
+    /// # Example
+    /// ```
     /// use rust_socketio::{
     ///     asynchronous::{Client, ClientBuilder},
     ///     Payload,
@@ -308,6 +311,7 @@ impl Client {
     ///     thread::sleep(Duration::from_millis(30000));
     ///     socket.disconnect().await.expect("Disconnect failed");
     /// }
+    /// ```
     #[inline]
     pub async fn ack<D>(&self, data: D) -> Result<()>
     where
