@@ -524,6 +524,7 @@ mod test {
             None,
             0,
             None,
+            None,
         );
 
         assert_eq!(
@@ -537,6 +538,7 @@ mod test {
             Some(String::from("{\"token\":\"123\"}")),
             None,
             0,
+            None,
             None,
         );
 
@@ -552,6 +554,7 @@ mod test {
             None,
             0,
             None,
+            None,
         );
 
         assert_eq!(Bytes::from(&packet), "1/admin,".to_string().into_bytes());
@@ -562,6 +565,7 @@ mod test {
             Some(String::from("[\"hello\",1]")),
             None,
             0,
+            None,
             None,
         );
 
@@ -576,6 +580,7 @@ mod test {
             Some(String::from("[\"project:delete\",123]")),
             Some(456),
             0,
+            None,
             None,
         );
 
@@ -593,6 +598,7 @@ mod test {
             Some(456),
             0,
             None,
+            None,
         );
 
         assert_eq!(
@@ -606,6 +612,7 @@ mod test {
             Some(String::from("{\"message\":\"Not authorized\"}")),
             None,
             0,
+            None,
             None,
         );
 
@@ -623,6 +630,7 @@ mod test {
             None,
             1,
             Some(vec![Bytes::from_static(&[1, 2, 3])]),
+            None,
         );
 
         assert_eq!(
@@ -639,6 +647,7 @@ mod test {
             Some(456),
             1,
             Some(vec![Bytes::from_static(&[1, 2, 3])]),
+            None,
         );
 
         assert_eq!(
@@ -655,6 +664,7 @@ mod test {
             Some(456),
             1,
             Some(vec![Bytes::from_static(&[3, 2, 1])]),
+            None,
         );
 
         assert_eq!(
