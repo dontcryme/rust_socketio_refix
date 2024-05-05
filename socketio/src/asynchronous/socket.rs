@@ -14,7 +14,7 @@ use std::{
     fmt::Debug,
     pin::Pin,
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicI32, Ordering},
         Arc,
     },
 };
@@ -24,16 +24,20 @@ pub(crate) struct Socket {
     engine_client: Arc<EngineClient>,
     connected: Arc<AtomicBool>,
     generator: StreamGenerator<Packet>,
+    ack_id: Arc<AtomicI32>,
 }
 
 impl Socket {
     /// Creates an instance of `Socket`.
     pub(super) fn new(engine_client: EngineClient) -> Result<Self> {
         let connected = Arc::new(AtomicBool::default());
+        let ack_id = Arc::new(AtomicI32::new(-1));
+
         Ok(Socket {
             engine_client: Arc::new(engine_client.clone()),
             connected: connected.clone(),
-            generator: StreamGenerator::new(Self::stream(engine_client, connected)),
+            ack_id: ack_id.clone(),
+            generator: StreamGenerator::new(Self::stream(engine_client, connected, ack_id)),
         })
     }
 
@@ -51,7 +55,7 @@ impl Socket {
 
     //[KDJ]
     pub async fn wait_connect_incoming_sid(&self) -> Result<()> {
-        self.engine_client.wait_connect_incoming_sid().await;
+        self.engine_client.wait_connect_incoming_sid().await?;
         Ok(())
     }
 
@@ -64,6 +68,11 @@ impl Socket {
         if self.connected.load(Ordering::Acquire) {
             self.connected.store(false, Ordering::Release);
         }
+
+        if self.ack_id.load(Ordering::Acquire) != -1 {
+            self.ack_id.store(-1, Ordering::Release);
+        }
+
         Ok(())
     }
 
@@ -95,9 +104,25 @@ impl Socket {
         self.send(socket_packet).await
     }
 
+    /// Emits to connected other side with given data
+    pub async fn ack(&self, nsp: &str, data: Payload) -> Result<()> {
+        if self.ack_id.load(Ordering::Acquire) != -1 {
+            let socket_packet = Packet::ack_from_payload(
+                data,
+                Event::Message,
+                nsp,
+                Some(self.ack_id.load(Ordering::Acquire)),
+            )?;
+            self.send(socket_packet).await
+        } else {
+            Ok(())
+        }
+    }
+
     fn stream(
         client: EngineClient,
         is_connected: Arc<AtomicBool>,
+        ack_id: Arc<AtomicI32>,
     ) -> Pin<Box<impl Stream<Item = Result<Packet>> + Send>> {
         Box::pin(try_stream! {
                 for await received_data in client.clone() {
@@ -107,6 +132,11 @@ impl Socket {
                         || packet.packet_id == EnginePacketId::MessageBinary
                     {
                         let packet = Self::handle_engineio_packet(packet, client.clone()).await?;
+
+                        if ack_id.load(Ordering::Acquire) != packet.id.unwrap_or(-1) {
+                            ack_id.store(-1, Ordering::Release);
+                        }
+
                         Self::handle_socketio_packet(&packet, is_connected.clone());
 
                         yield packet;
@@ -138,7 +168,6 @@ impl Socket {
         mut client: EngineClient,
     ) -> Result<Packet> {
         let mut socket_packet = Packet::try_from(&packet.data)?;
-
         // Only handle attachments if there are any
         if socket_packet.attachment_count > 0 {
             let mut attachments_left = socket_packet.attachment_count;

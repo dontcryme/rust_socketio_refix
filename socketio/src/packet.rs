@@ -28,9 +28,65 @@ pub struct Packet {
     pub id: Option<i32>,
     pub attachment_count: u8,
     pub attachments: Option<Vec<Bytes>>,
+    pub ack_id: Option<i32>, //this ack_id is just used for get and save ack_id from incoming data and sending for request id
 }
 
 impl Packet {
+    //below function need to ack_id information
+    //ack function retrun to server
+    #[inline]
+    pub(crate) fn ack_from_payload<'a>(
+        payload: Payload,
+        event: Event,
+        nsp: &'a str,
+        ack_id: Option<i32>,
+    ) -> Result<Packet> {
+        let _ = event;
+
+        match payload {
+            Payload::Binary(bin_data) => Ok(Packet::new(
+                PacketId::BinaryAck,
+                nsp.to_owned(),
+                None,
+                ack_id,
+                1,
+                Some(vec![bin_data]),
+                None,
+            )),
+            #[allow(deprecated)]
+            Payload::String(str_data) => {
+                let payload = if serde_json::from_str::<IgnoredAny>(&str_data).is_ok() {
+                    format!("[{str_data}]")
+                } else {
+                    format!("[\"{str_data}\"]")
+                };
+
+                Ok(Packet::new(
+                    PacketId::Ack,
+                    nsp.to_owned(),
+                    Some(payload),
+                    ack_id,
+                    0,
+                    None,
+                    None,
+                ))
+            }
+            Payload::Text(data) => {
+                let payload = serde_json::Value::Array(data).to_string();
+
+                Ok(Packet::new(
+                    PacketId::Ack,
+                    nsp.to_owned(),
+                    Some(payload),
+                    ack_id,
+                    0,
+                    None,
+                    None,
+                ))
+            }
+        }
+    }
+
     /// Returns a packet for a payload, could be used for both binary and non binary
     /// events and acks. Convenience method.
     #[inline]
@@ -53,6 +109,7 @@ impl Packet {
                 id,
                 1,
                 Some(vec![bin_data]),
+                None,
             )),
             #[allow(deprecated)]
             Payload::String(str_data) => {
@@ -68,6 +125,7 @@ impl Packet {
                     Some(payload),
                     id,
                     0,
+                    None,
                     None,
                 ))
             }
@@ -85,6 +143,7 @@ impl Packet {
                     id,
                     0,
                     None,
+                    None,
                 ))
             }
         }
@@ -100,6 +159,7 @@ impl Default for Packet {
             id: None,
             attachment_count: 0,
             attachments: None,
+            ack_id: None,
         }
     }
 }
@@ -136,6 +196,7 @@ impl Packet {
         id: Option<i32>,
         attachment_count: u8,
         attachments: Option<Vec<Bytes>>,
+        ack_id: Option<i32>,
     ) -> Self {
         Packet {
             packet_type,
@@ -144,6 +205,7 @@ impl Packet {
             id,
             attachment_count,
             attachments,
+            ack_id,
         }
     }
 }
@@ -298,6 +360,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -316,6 +379,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -331,6 +395,7 @@ mod test {
                 None,
                 None,
                 0,
+                None,
                 None,
             ),
             packet.unwrap()
@@ -348,6 +413,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -363,6 +429,7 @@ mod test {
                 Some(String::from("[\"project:delete\",123]")),
                 Some(456),
                 0,
+                None,
                 None,
             ),
             packet.unwrap()
@@ -380,6 +447,7 @@ mod test {
                 Some(456),
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -396,6 +464,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -411,6 +480,7 @@ mod test {
                 Some(String::from("\"hello\"")),
                 None,
                 1,
+                None,
                 None,
             ),
             packet.unwrap()
@@ -430,6 +500,7 @@ mod test {
                 Some(456),
                 1,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -445,6 +516,7 @@ mod test {
                 None,
                 Some(456),
                 1,
+                None,
                 None,
             ),
             packet.unwrap()
@@ -462,6 +534,7 @@ mod test {
             None,
             0,
             None,
+            None,
         );
 
         assert_eq!(
@@ -475,6 +548,7 @@ mod test {
             Some(String::from("{\"token\":\"123\"}")),
             None,
             0,
+            None,
             None,
         );
 
@@ -490,6 +564,7 @@ mod test {
             None,
             0,
             None,
+            None,
         );
 
         assert_eq!(Bytes::from(&packet), "1/admin,".to_string().into_bytes());
@@ -500,6 +575,7 @@ mod test {
             Some(String::from("[\"hello\",1]")),
             None,
             0,
+            None,
             None,
         );
 
@@ -514,6 +590,7 @@ mod test {
             Some(String::from("[\"project:delete\",123]")),
             Some(456),
             0,
+            None,
             None,
         );
 
@@ -531,6 +608,7 @@ mod test {
             Some(456),
             0,
             None,
+            None,
         );
 
         assert_eq!(
@@ -544,6 +622,7 @@ mod test {
             Some(String::from("{\"message\":\"Not authorized\"}")),
             None,
             0,
+            None,
             None,
         );
 
@@ -561,6 +640,7 @@ mod test {
             None,
             1,
             Some(vec![Bytes::from_static(&[1, 2, 3])]),
+            None,
         );
 
         assert_eq!(
@@ -577,6 +657,7 @@ mod test {
             Some(456),
             1,
             Some(vec![Bytes::from_static(&[1, 2, 3])]),
+            None,
         );
 
         assert_eq!(
@@ -593,6 +674,7 @@ mod test {
             Some(456),
             1,
             Some(vec![Bytes::from_static(&[3, 2, 1])]),
+            None,
         );
 
         assert_eq!(
@@ -623,7 +705,8 @@ mod test {
                 data: Some("\"test_event\"".to_owned()),
                 id: None,
                 attachment_count: 1,
-                attachments: Some(vec![Bytes::from_static(&[0, 4, 9])])
+                attachments: Some(vec![Bytes::from_static(&[0, 4, 9])]),
+                ack_id: None,
             }
         )
     }
@@ -647,7 +730,8 @@ mod test {
                 data: Some("[\"other_event\",\"test\"]".to_owned()),
                 id: Some(10),
                 attachment_count: 0,
-                attachments: None
+                attachments: None,
+                ack_id: None,
             }
         )
     }
@@ -668,7 +752,75 @@ mod test {
                 data: Some("[\"third_event\",\"String test\",{\"type\":\"object\"}]".to_owned()),
                 id: Some(10),
                 attachment_count: 0,
-                attachments: None
+                attachments: None,
+                ack_id: None,
+            }
+        )
+    }
+
+    #[test]
+    fn ack_from_payload_binary() {
+        let payload = Payload::Binary(Bytes::from_static(&[0, 4, 9]));
+        let result =
+            Packet::ack_from_payload(payload.clone(), "test_event".into(), "namespace", None)
+                .unwrap();
+        assert_eq!(
+            result,
+            Packet {
+                packet_type: PacketId::BinaryAck,
+                nsp: "namespace".to_owned(),
+                data: None,
+                id: None,
+                attachment_count: 1,
+                attachments: Some(vec![Bytes::from_static(&[0, 4, 9])]),
+                ack_id: None,
+            }
+        )
+    }
+
+    #[test]
+    #[allow(deprecated)]
+    fn ack_from_payload_string() {
+        let payload = Payload::String("test".to_owned());
+        let result = Packet::ack_from_payload(
+            payload.clone(),
+            "other_event".into(),
+            "other_namespace",
+            Some(10),
+        )
+        .unwrap();
+        assert_eq!(
+            result,
+            Packet {
+                packet_type: PacketId::Ack,
+                nsp: "other_namespace".to_owned(),
+                data: Some("[\"test\"]".to_owned()),
+                id: Some(10),
+                attachment_count: 0,
+                attachments: None,
+                ack_id: None,
+            }
+        )
+    }
+
+    #[test]
+    fn ack_from_payload_json() {
+        let payload = Payload::Text(vec![
+            serde_json::json!("String test"),
+            serde_json::json!({"type":"object"}),
+        ]);
+        let result =
+            Packet::ack_from_payload(payload.clone(), "third_event".into(), "/", Some(10)).unwrap();
+        assert_eq!(
+            result,
+            Packet {
+                packet_type: PacketId::Ack,
+                nsp: "/".to_owned(),
+                data: Some("[\"String test\",{\"type\":\"object\"}]".to_owned()),
+                id: Some(10),
+                attachment_count: 0,
+                attachments: None,
+                ack_id: None,
             }
         )
     }
