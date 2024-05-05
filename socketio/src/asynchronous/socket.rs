@@ -133,6 +133,11 @@ impl Socket {
                     {
                         let packet = Self::handle_engineio_packet(packet, client.clone()).await?;
                         ack_id.store( packet.ack_id.unwrap() , Ordering::Release);
+
+                        if self.ack_id.load(Ordering::Acquire) != packet.id {
+                            ack_id.store(-1, Ordering::Release);
+                        }
+
                         Self::handle_socketio_packet(&packet, is_connected.clone());
 
                         yield packet;
@@ -164,13 +169,6 @@ impl Socket {
         mut client: EngineClient,
     ) -> Result<Packet> {
         let mut socket_packet = Packet::try_from(&packet.data)?;
-
-        if let Some(ack_id) = socket_packet.id {
-            ack_id.store(ack_id, Ordering::Release);
-        } else {
-            ack_id.store(-1, Ordering::Release);
-        }
-
         // Only handle attachments if there are any
         if socket_packet.attachment_count > 0 {
             let mut attachments_left = socket_packet.attachment_count;
