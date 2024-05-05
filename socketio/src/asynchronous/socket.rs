@@ -166,9 +166,9 @@ impl Socket {
         let mut socket_packet = Packet::try_from(&packet.data)?;
 
         if let Some(ack_id) = socket_packet.id {
-            self.ack_id.store(ack_id, Ordering::Release);
+            ack_id.store(ack_id, Ordering::Release);
         } else {
-            self.ack_id.store(-1, Ordering::Release);
+            ack_id.store(-1, Ordering::Release);
         }
 
         // Only handle attachments if there are any
