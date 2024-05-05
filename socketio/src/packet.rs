@@ -794,7 +794,7 @@ mod test {
             Packet {
                 packet_type: PacketId::Ack,
                 nsp: "other_namespace".to_owned(),
-                data: Some("\"test\"]".to_owned()),
+                data: Some("[\"test\"]".to_owned()),
                 id: Some(10),
                 attachment_count: 0,
                 attachments: None,

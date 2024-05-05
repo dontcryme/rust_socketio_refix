@@ -55,7 +55,7 @@ impl Socket {
 
     //[KDJ]
     pub async fn wait_connect_incoming_sid(&self) -> Result<()> {
-        self.engine_client.wait_connect_incoming_sid().await;
+        self.engine_client.wait_connect_incoming_sid().await?;
         Ok(())
     }
 
@@ -68,6 +68,11 @@ impl Socket {
         if self.connected.load(Ordering::Acquire) {
             self.connected.store(false, Ordering::Release);
         }
+
+        if self.ack_id.load(Ordering::Acquire) {
+            self.ack_id.store(Some(-1), Ordering::Release);
+        }
+
         Ok(())
     }
 
@@ -161,9 +166,9 @@ impl Socket {
         let mut socket_packet = Packet::try_from(&packet.data)?;
 
         if let Some(ack_id) = socket_packet.id {
-            socket_packet.ack_id = Some(ack_id);
+            self.ack_id.store(ack_id, Ordering::Release);
         } else {
-            socket_packet.ack_id = Some(-1);
+            self.ack_id.store(-1, Ordering::Release);
         }
 
         // Only handle attachments if there are any

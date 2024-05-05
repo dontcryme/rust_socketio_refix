@@ -1078,7 +1078,7 @@ mod test {
                 None,
                 0,
                 None,
-                None,
+                Some(-1),
             )
         );
         let packet: Option<Packet> = Some(socket_stream.next().await.unwrap()?);
