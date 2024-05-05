@@ -360,6 +360,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -378,6 +379,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -393,6 +395,7 @@ mod test {
                 None,
                 None,
                 0,
+                None,
                 None,
             ),
             packet.unwrap()
@@ -410,6 +413,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -425,6 +429,7 @@ mod test {
                 Some(String::from("[\"project:delete\",123]")),
                 Some(456),
                 0,
+                None,
                 None,
             ),
             packet.unwrap()
@@ -442,6 +447,7 @@ mod test {
                 Some(456),
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -458,6 +464,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -473,6 +480,7 @@ mod test {
                 Some(String::from("\"hello\"")),
                 None,
                 1,
+                None,
                 None,
             ),
             packet.unwrap()
@@ -492,6 +500,7 @@ mod test {
                 Some(456),
                 1,
                 None,
+                None,
             ),
             packet.unwrap()
         );
@@ -507,6 +516,7 @@ mod test {
                 None,
                 Some(456),
                 1,
+                None,
                 None,
             ),
             packet.unwrap()

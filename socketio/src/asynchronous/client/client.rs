@@ -1221,6 +1221,7 @@ mod test {
                 id: Some(_),
                 attachment_count: 0,
                 attachments: None,
+                None,
             }
         ));
 
