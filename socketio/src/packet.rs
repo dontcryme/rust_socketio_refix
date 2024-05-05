@@ -205,10 +205,7 @@ impl Packet {
             id,
             attachment_count,
             attachments,
-            ack_id: match ack_id {
-                Some(_value) => ack_id,
-                None => None,
-            },
+            ack_id,
         }
     }
 }

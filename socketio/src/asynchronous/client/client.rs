@@ -991,7 +991,8 @@ mod test {
                 Some("[\"auth\",\"success\"]".to_owned()),
                 None,
                 0,
-                None
+                None,
+                None,
             )
         );
 
@@ -1058,6 +1059,7 @@ mod test {
                 None,
                 0,
                 None,
+                None,
             )
         );
 
@@ -1075,7 +1077,8 @@ mod test {
                 Some("[\"test\",\"Hello from the test event!\"]".to_owned()),
                 None,
                 0,
-                None
+                None,
+                None,
             )
         );
         let packet: Option<Packet> = Some(socket_stream.next().await.unwrap()?);
@@ -1092,6 +1095,7 @@ mod test {
                 None,
                 1,
                 Some(vec![Bytes::from_static(&[4, 5, 6])]),
+                None,
             )
         );
 
@@ -1109,6 +1113,7 @@ mod test {
                 None,
                 1,
                 Some(vec![Bytes::from_static(&[1, 2, 3])]),
+                None,
             )
         );
 
@@ -1132,6 +1137,7 @@ mod test {
                 ),
                 None,
                 0,
+                None,
                 None,
             )
         );
@@ -1159,6 +1165,7 @@ mod test {
                 ),
                 None,
                 0,
+                None,
                 None,
             )
         );
@@ -1196,6 +1203,7 @@ mod test {
                 Some("[\"test-received\",123]".to_owned()),
                 None,
                 0,
+                None,
                 None,
             )
         );
