@@ -1059,7 +1059,7 @@ mod test {
                 None,
                 0,
                 None,
-                None,
+                Some(-1),
             )
         );
 

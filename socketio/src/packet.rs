@@ -767,9 +767,9 @@ mod test {
         assert_eq!(
             result,
             Packet {
-                packet_type: PacketId::BinaryEvent,
+                packet_type: PacketId::BinaryAck,
                 nsp: "namespace".to_owned(),
-                data: Some("\"test_event\"".to_owned()),
+                data: None,
                 id: None,
                 attachment_count: 1,
                 attachments: Some(vec![Bytes::from_static(&[0, 4, 9])]),
@@ -792,7 +792,7 @@ mod test {
         assert_eq!(
             result,
             Packet {
-                packet_type: PacketId::Event,
+                packet_type: PacketId::Ack,
                 nsp: "other_namespace".to_owned(),
                 data: Some("\"test\"]".to_owned()),
                 id: Some(10),
@@ -814,7 +814,7 @@ mod test {
         assert_eq!(
             result,
             Packet {
-                packet_type: PacketId::Event,
+                packet_type: PacketId::Ack,
                 nsp: "/".to_owned(),
                 data: Some("[\"String test\",{\"type\":\"object\"}]".to_owned()),
                 id: Some(10),
