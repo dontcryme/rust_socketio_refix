@@ -216,7 +216,7 @@ impl Client {
                 }
             }
         });
-        self.wait_connect_incoming_sid().await;
+        self.wait_connect_incoming_sid().await?;
         Ok(())
     }
 
