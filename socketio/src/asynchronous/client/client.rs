@@ -270,10 +270,7 @@ impl Client {
     ///
     /// # Example
     /// ```
-    /// use rust_socketio::{
-    ///     asynchronous::{Client, ClientBuilder},
-    ///     Payload,
-    /// };
+    /// use rust_socketio::{asynchronous::{ClientBuilder, Client}, Payload};
     /// use serde_json::json;
     /// use std::time::Duration;
     /// use std::thread;
@@ -286,9 +283,7 @@ impl Client {
     ///        async move {
     ///           let byte_test = vec![0x01, 0x02];
     ///           let _ = socket.ack(byte_test).await;
-    ///       // or sending string
-    ///         }
-    ///         .boxed()
+    ///         }.boxed()
     ///     };
     ///
     ///     // get a socket that is connected to the admin namespace
