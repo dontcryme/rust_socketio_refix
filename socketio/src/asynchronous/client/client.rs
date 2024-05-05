@@ -270,6 +270,7 @@ impl Client {
     ///
     /// # Example
     /// ```
+    /// use futures_util::FutureExt;
     /// use rust_socketio::{asynchronous::{ClientBuilder, Client}, Payload};
     /// use serde_json::json;
     /// use std::time::Duration;
@@ -296,7 +297,8 @@ impl Client {
     ///         .connect()
     ///         .await
     ///         .expect("Connection failed");
-    ///
+    ///     
+    ///     let json_payload = json!({"myAckData": "tesT"});
     ///
     ///     socket
     ///         .emit("acktest", json_payload)
