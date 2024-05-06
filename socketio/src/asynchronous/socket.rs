@@ -134,7 +134,7 @@ impl Socket {
                         let packet = Self::handle_engineio_packet(packet, client.clone()).await?;
 
                         if ack_id.load(Ordering::Acquire) != packet.id.unwrap_or(-1) {
-                            ack_id.store(-1, Ordering::Release);
+                            ack_id.store(packet.id.unwrap_or(-1), Ordering::Release);
                         }
 
                         Self::handle_socketio_packet(&packet, is_connected.clone());
