@@ -168,6 +168,46 @@ async fn main() {
 }
 ```
 
+The following code shows the example of how to use the 'ack' function to react server-side 'emitwithack' function in the async faction:
+```rust
+use futures_util::FutureExt;
+use rust_socketio::{
+    asynchronous::{Client, ClientBuilder},
+    Payload,
+};
+use std::time::Duration;
+use std::thread;
+use bytes::Bytes;
+
+#[tokio::main]
+async fn main() {
+
+    
+    let callback3 = |_payload: Payload, socket: Client| {
+        async move {
+          //test react to server(when socket.io server invoke emitwithack method and wanna get result)
+          let buf: Bytes = Bytes::from_static(&[0x00, 0x01, 0x03]);
+          //or socket.ack("string").await.expect("Ack invoke failed");
+          socket.ack(buf).await.expect("Ack invoke failed");
+        }
+        .boxed()
+    };
+   
+    let socket = ClientBuilder::new("http://localhost:4200")
+        .namespace("/")
+        .reconnect(false)
+        .on("acktest", callback3)
+        .on("error", |err, _| {
+            async move { eprintln!("Error: {:#?}", err) }.boxed()
+        })
+        .connect()
+        .await.expect("Connection Failed");
+    
+    thread::sleep(Duration::from_millis(25000));
+    socket.disconnect().await.expect("Disconnect failed");
+}
+```
+
 ## Content of this repository
 
 This repository contains a rust implementation of the socket.io protocol as well as the underlying engine.io protocol.
