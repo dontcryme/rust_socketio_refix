@@ -168,7 +168,7 @@ async fn main() {
 }
 ```
 
-The following code shows the example of how to use the 'ack' function to react server-side 'emitwithack' function in the async faction:
+The following code shows the example of how to use the 'ack' function to react server-side 'emitwithack' function in the async fashion:
 ```rust
 use futures_util::FutureExt;
 use rust_socketio::{
