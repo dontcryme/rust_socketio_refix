@@ -90,6 +90,51 @@ impl RawClient {
         Ok(())
     }
 
+    /// Sends a message to the server but `alloc`s an `ack` to check whether the
+    /// server responded in a given time span. This message takes an event, which
+    /// could either be one of the common events like "message" or "error" or a
+    /// custom event like "foo", as well as a data parameter. But be careful,
+    /// in case you send a [`Payload::String`], the string needs to be valid JSON.
+    /// It's even recommended to use a library like serde_json to serialize the data properly.
+    /// It also requires a timeout `Duration` in which the client needs to answer.
+    /// If the ack is acked in the correct time span, the specified callback is
+    /// called. The callback consumes a [`Payload`] which represents the data send
+    /// by the server.
+    ///
+    /// # Example
+    /// ```
+    /// use rust_socketio::{ClientBuilder, Payload, RawClient};
+    /// use std::time::Duration;
+    /// use std::thread::sleep;
+    ///
+    ///
+    /// let ack_callback = |message: Payload, socket: RawClient| {
+    ///     match message {
+    ///         Payload::Text(values) => println!("{:#?}", values),
+    ///         Payload::Binary(bytes) => println!("Received bytes: {:#?}", bytes),
+    ///         // This is deprecated, use Payload::Text instead
+    ///         Payload::String(str) => println!("{}", str),
+    ///    }
+    ///    socket.ack("foo").unwrap();
+    /// };
+    ///
+    /// let mut socket = ClientBuilder::new("http://localhost:4200/")
+    ///     .on("acktest", ack_callback)
+    ///     .connect()
+    ///     .expect("connection failed");
+    ///
+
+    ///
+    /// sleep(Duration::from_secs(2));
+    /// ```
+    #[inline]
+    pub fn ack<D>(&self, data: D) -> Result<()>
+    where
+        D: Into<Payload>,
+    {
+        self.socket.ack(&self.nsp, data.into())
+    }
+
     /// Sends a message to the server using the underlying `engine.io` protocol.
     /// This message takes an event, which could either be one of the common
     /// events like "message" or "error" or a custom event like "foo". But be

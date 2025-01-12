@@ -34,58 +34,6 @@ pub struct Packet {
 impl Packet {
     //below function need to ack_id information
     //ack function retrun to server
-    #[inline]
-    pub(crate) fn ack_from_payload<'a>(
-        payload: Payload,
-        event: Event,
-        nsp: &'a str,
-        ack_id: Option<i32>,
-    ) -> Result<Packet> {
-        let _ = event;
-
-        match payload {
-            Payload::Binary(bin_data) => Ok(Packet::new(
-                PacketId::BinaryAck,
-                nsp.to_owned(),
-                None,
-                ack_id,
-                1,
-                Some(vec![bin_data]),
-                None,
-            )),
-            #[allow(deprecated)]
-            Payload::String(str_data) => {
-                let payload = if serde_json::from_str::<IgnoredAny>(&str_data).is_ok() {
-                    format!("[{str_data}]")
-                } else {
-                    format!("[\"{str_data}\"]")
-                };
-
-                Ok(Packet::new(
-                    PacketId::Ack,
-                    nsp.to_owned(),
-                    Some(payload),
-                    ack_id,
-                    0,
-                    None,
-                    None,
-                ))
-            }
-            Payload::Text(data) => {
-                let payload = serde_json::Value::Array(data).to_string();
-
-                Ok(Packet::new(
-                    PacketId::Ack,
-                    nsp.to_owned(),
-                    Some(payload),
-                    ack_id,
-                    0,
-                    None,
-                    None,
-                ))
-            }
-        }
-    }
 
     /// Returns a packet for a payload, could be used for both binary and non binary
     /// events and acks. Convenience method.
@@ -98,11 +46,6 @@ impl Packet {
     ) -> Result<Packet> {
         match payload {
             Payload::Binary(bin_data) => Ok(Packet::new(
-                // if id.is_some() && id.unwrap() == PacketId::Event as i32{
-                //     PacketId::BinaryEvent
-                // } else {
-                //     PacketId::BinaryAck
-                // }
                 PacketId::BinaryEvent,
                 nsp.to_owned(),
                 Some(serde_json::Value::String(event.into()).to_string()),
@@ -141,6 +84,56 @@ impl Packet {
                     nsp.to_owned(),
                     Some(payload),
                     id,
+                    0,
+                    None,
+                    None,
+                ))
+            }
+        }
+    }
+
+    #[inline]
+    pub(crate) fn ack_from_payload<'a>(
+        payload: Payload,
+        nsp: &'a str,
+        ack_id: Option<i32>,
+    ) -> Result<Packet> {
+        match payload {
+            Payload::Binary(bin_data) => Ok(Packet::new(
+                PacketId::BinaryAck,
+                nsp.to_owned(),
+                None,
+                ack_id,
+                1,
+                Some(vec![bin_data]),
+                None,
+            )),
+            #[allow(deprecated)]
+            Payload::String(str_data) => {
+                let payload = if serde_json::from_str::<IgnoredAny>(&str_data).is_ok() {
+                    format!("[{str_data}]")
+                } else {
+                    format!("[\"{str_data}\"]")
+                };
+
+                Ok(Packet::new(
+                    PacketId::Ack,
+                    nsp.to_owned(),
+                    Some(payload),
+                    ack_id,
+                    0,
+                    None,
+                    None,
+                ))
+            }
+            Payload::Text(data) => {
+                let payload = serde_json::Value::Array(data).to_string();
+
+                Ok(Packet::new(
+                    PacketId::Ack,
+                    nsp.to_owned(),
+                    Some(payload),
+                    ack_id,
                     0,
                     None,
                     None,
@@ -761,9 +754,7 @@ mod test {
     #[test]
     fn ack_from_payload_binary() {
         let payload = Payload::Binary(Bytes::from_static(&[0, 4, 9]));
-        let result =
-            Packet::ack_from_payload(payload.clone(), "test_event".into(), "namespace", None)
-                .unwrap();
+        let result = Packet::ack_from_payload(payload.clone(), "namespace", None).unwrap();
         assert_eq!(
             result,
             Packet {
@@ -782,13 +773,8 @@ mod test {
     #[allow(deprecated)]
     fn ack_from_payload_string() {
         let payload = Payload::String("test".to_owned());
-        let result = Packet::ack_from_payload(
-            payload.clone(),
-            "other_event".into(),
-            "other_namespace",
-            Some(10),
-        )
-        .unwrap();
+        let result =
+            Packet::ack_from_payload(payload.clone(), "other_namespace", Some(10)).unwrap();
         assert_eq!(
             result,
             Packet {
@@ -809,8 +795,7 @@ mod test {
             serde_json::json!("String test"),
             serde_json::json!({"type":"object"}),
         ]);
-        let result =
-            Packet::ack_from_payload(payload.clone(), "third_event".into(), "/", Some(10)).unwrap();
+        let result = Packet::ack_from_payload(payload.clone(), "/", Some(10)).unwrap();
         assert_eq!(
             result,
             Packet {

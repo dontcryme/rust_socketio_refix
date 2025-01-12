@@ -3,6 +3,7 @@ use crate::packet::{Packet, PacketId};
 use bytes::Bytes;
 use rust_engineio::{Client as EngineClient, Packet as EnginePacket, PacketId as EnginePacketId};
 use std::convert::TryFrom;
+use std::sync::atomic::AtomicI32;
 use std::sync::{atomic::AtomicBool, Arc};
 use std::{fmt::Debug, sync::atomic::Ordering};
 
@@ -10,19 +11,23 @@ use super::{event::Event, payload::Payload};
 
 /// Handles communication in the `socket.io` protocol.
 #[derive(Clone, Debug)]
-pub(crate) struct Socket {
+pub struct Socket {
     //TODO: 0.4.0 refactor this
     engine_client: Arc<EngineClient>,
     connected: Arc<AtomicBool>,
+    ack_id: Arc<AtomicI32>,
 }
 
 impl Socket {
     /// Creates an instance of `Socket`.
-
+    #[doc(hidden)]
     pub(super) fn new(engine_client: EngineClient) -> Result<Self> {
+        let ack_id = Arc::new(AtomicI32::new(-1));
+
         Ok(Socket {
             engine_client: Arc::new(engine_client),
             connected: Arc::new(AtomicBool::default()),
+            ack_id: ack_id.clone(),
         })
     }
 
@@ -47,6 +52,11 @@ impl Socket {
         if self.connected.load(Ordering::Acquire) {
             self.connected.store(false, Ordering::Release);
         }
+
+        if self.ack_id.load(Ordering::Acquire) != -1 {
+            self.ack_id.store(-1, Ordering::Release);
+        }
+
         Ok(())
     }
 
@@ -68,6 +78,13 @@ impl Socket {
         }
 
         Ok(())
+    }
+
+    /// Emits to connected other side with given data
+    pub fn ack(&self, nsp: &str, data: Payload) -> Result<()> {
+        let socket_packet =
+            Packet::ack_from_payload(data, nsp, Some(self.ack_id.load(Ordering::Acquire)))?;
+        self.send(socket_packet)
     }
 
     /// Emits to certain event with given data. The data needs to be JSON,
