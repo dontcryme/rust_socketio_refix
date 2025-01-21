@@ -108,7 +108,6 @@ impl Socket {
                             self.ack_id
                                 .store(packet.id.unwrap_or(-1), Ordering::Release);
                         }
-                        
                         self.handle_socketio_packet(&packet);
                         return Ok(Some(packet));
                     } else {
