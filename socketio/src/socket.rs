@@ -103,6 +103,10 @@ impl Socket {
                         || packet.packet_id == EnginePacketId::MessageBinary
                     {
                         let packet = self.handle_engineio_packet(packet)?;
+                        if self.ack_id.load(Ordering::Acquire) != packet.id.unwrap_or(-1) {
+                            self.ack_id
+                                .store(packet.id.unwrap_or(-1), Ordering::Release);
+                        }
                         self.handle_socketio_packet(&packet);
                         return Ok(Some(packet));
                     } else {
