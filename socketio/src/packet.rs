@@ -28,7 +28,6 @@ pub struct Packet {
     pub id: Option<i32>,
     pub attachment_count: u8,
     pub attachments: Option<Vec<Bytes>>,
-    pub ack_id: Option<i32>, //this ack_id is just used for get and save ack_id from incoming data and sending for request id
 }
 
 impl Packet {
@@ -52,7 +51,6 @@ impl Packet {
                 id,
                 1,
                 Some(vec![bin_data]),
-                None,
             )),
             #[allow(deprecated)]
             Payload::String(str_data) => {
@@ -69,7 +67,6 @@ impl Packet {
                     id,
                     0,
                     None,
-                    None,
                 ))
             }
             Payload::Text(mut data) => {
@@ -85,7 +82,6 @@ impl Packet {
                     Some(payload),
                     id,
                     0,
-                    None,
                     None,
                 ))
             }
@@ -106,7 +102,6 @@ impl Packet {
                 ack_id,
                 1,
                 Some(vec![bin_data]),
-                None,
             )),
             #[allow(deprecated)]
             Payload::String(str_data) => {
@@ -123,7 +118,6 @@ impl Packet {
                     ack_id,
                     0,
                     None,
-                    None,
                 ))
             }
             Payload::Text(data) => {
@@ -135,7 +129,6 @@ impl Packet {
                     Some(payload),
                     ack_id,
                     0,
-                    None,
                     None,
                 ))
             }
@@ -152,7 +145,6 @@ impl Default for Packet {
             id: None,
             attachment_count: 0,
             attachments: None,
-            ack_id: None,
         }
     }
 }
@@ -189,7 +181,6 @@ impl Packet {
         id: Option<i32>,
         attachment_count: u8,
         attachments: Option<Vec<Bytes>>,
-        ack_id: Option<i32>,
     ) -> Self {
         Packet {
             packet_type,
@@ -198,7 +189,6 @@ impl Packet {
             id,
             attachment_count,
             attachments,
-            ack_id,
         }
     }
 }
@@ -353,7 +343,6 @@ mod test {
                 None,
                 0,
                 None,
-                None,
             ),
             packet.unwrap()
         );
@@ -372,7 +361,6 @@ mod test {
                 None,
                 0,
                 None,
-                None,
             ),
             packet.unwrap()
         );
@@ -388,7 +376,6 @@ mod test {
                 None,
                 None,
                 0,
-                None,
                 None,
             ),
             packet.unwrap()
@@ -406,7 +393,6 @@ mod test {
                 None,
                 0,
                 None,
-                None,
             ),
             packet.unwrap()
         );
@@ -422,7 +408,6 @@ mod test {
                 Some(String::from("[\"project:delete\",123]")),
                 Some(456),
                 0,
-                None,
                 None,
             ),
             packet.unwrap()
@@ -440,7 +425,6 @@ mod test {
                 Some(456),
                 0,
                 None,
-                None,
             ),
             packet.unwrap()
         );
@@ -457,7 +441,6 @@ mod test {
                 None,
                 0,
                 None,
-                None,
             ),
             packet.unwrap()
         );
@@ -473,7 +456,6 @@ mod test {
                 Some(String::from("\"hello\"")),
                 None,
                 1,
-                None,
                 None,
             ),
             packet.unwrap()
@@ -493,7 +475,6 @@ mod test {
                 Some(456),
                 1,
                 None,
-                None,
             ),
             packet.unwrap()
         );
@@ -509,7 +490,6 @@ mod test {
                 None,
                 Some(456),
                 1,
-                None,
                 None,
             ),
             packet.unwrap()
@@ -527,7 +507,6 @@ mod test {
             None,
             0,
             None,
-            None,
         );
 
         assert_eq!(
@@ -541,7 +520,6 @@ mod test {
             Some(String::from("{\"token\":\"123\"}")),
             None,
             0,
-            None,
             None,
         );
 
@@ -557,7 +535,6 @@ mod test {
             None,
             0,
             None,
-            None,
         );
 
         assert_eq!(Bytes::from(&packet), "1/admin,".to_string().into_bytes());
@@ -568,7 +545,6 @@ mod test {
             Some(String::from("[\"hello\",1]")),
             None,
             0,
-            None,
             None,
         );
 
@@ -583,7 +559,6 @@ mod test {
             Some(String::from("[\"project:delete\",123]")),
             Some(456),
             0,
-            None,
             None,
         );
 
@@ -601,7 +576,6 @@ mod test {
             Some(456),
             0,
             None,
-            None,
         );
 
         assert_eq!(
@@ -615,7 +589,6 @@ mod test {
             Some(String::from("{\"message\":\"Not authorized\"}")),
             None,
             0,
-            None,
             None,
         );
 
@@ -633,7 +606,6 @@ mod test {
             None,
             1,
             Some(vec![Bytes::from_static(&[1, 2, 3])]),
-            None,
         );
 
         assert_eq!(
@@ -650,7 +622,6 @@ mod test {
             Some(456),
             1,
             Some(vec![Bytes::from_static(&[1, 2, 3])]),
-            None,
         );
 
         assert_eq!(
@@ -667,7 +638,6 @@ mod test {
             Some(456),
             1,
             Some(vec![Bytes::from_static(&[3, 2, 1])]),
-            None,
         );
 
         assert_eq!(
@@ -699,7 +669,6 @@ mod test {
                 id: None,
                 attachment_count: 1,
                 attachments: Some(vec![Bytes::from_static(&[0, 4, 9])]),
-                ack_id: None,
             }
         )
     }
@@ -724,7 +693,6 @@ mod test {
                 id: Some(10),
                 attachment_count: 0,
                 attachments: None,
-                ack_id: None,
             }
         )
     }
@@ -746,7 +714,6 @@ mod test {
                 id: Some(10),
                 attachment_count: 0,
                 attachments: None,
-                ack_id: None,
             }
         )
     }
@@ -764,7 +731,6 @@ mod test {
                 id: None,
                 attachment_count: 1,
                 attachments: Some(vec![Bytes::from_static(&[0, 4, 9])]),
-                ack_id: None,
             }
         )
     }
@@ -784,7 +750,6 @@ mod test {
                 id: Some(10),
                 attachment_count: 0,
                 attachments: None,
-                ack_id: None,
             }
         )
     }
@@ -805,7 +770,6 @@ mod test {
                 id: Some(10),
                 attachment_count: 0,
                 attachments: None,
-                ack_id: None,
             }
         )
     }

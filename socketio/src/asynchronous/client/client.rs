@@ -100,15 +100,7 @@ impl Client {
 
         // construct the opening packet
         let auth = self.auth.as_ref().map(|data| data.to_string());
-        let open_packet = Packet::new(
-            PacketId::Connect,
-            self.nsp.clone(),
-            auth,
-            None,
-            0,
-            None,
-            None,
-        );
+        let open_packet = Packet::new(PacketId::Connect, self.nsp.clone(), auth, None, 0, None);
 
         self.socket.read().await.send(open_packet).await?;
 
@@ -353,15 +345,8 @@ impl Client {
     pub async fn disconnect(&self) -> Result<()> {
         *(self.disconnect_reason.write().await) = DisconnectReason::Manual;
 
-        let disconnect_packet = Packet::new(
-            PacketId::Disconnect,
-            self.nsp.clone(),
-            None,
-            None,
-            0,
-            None,
-            None,
-        );
+        let disconnect_packet =
+            Packet::new(PacketId::Disconnect, self.nsp.clone(), None, None, 0, None);
 
         self.socket.read().await.send(disconnect_packet).await?;
         self.socket.read().await.disconnect().await?;
@@ -993,7 +978,6 @@ mod test {
                 None,
                 0,
                 None,
-                None,
             )
         );
 
@@ -1060,7 +1044,6 @@ mod test {
                 None,
                 0,
                 None,
-                None,
             )
         );
 
@@ -1079,7 +1062,6 @@ mod test {
                 None,
                 0,
                 None,
-                None,
             )
         );
         let packet: Option<Packet> = Some(socket_stream.next().await.unwrap()?);
@@ -1096,7 +1078,6 @@ mod test {
                 None,
                 1,
                 Some(vec![Bytes::from_static(&[4, 5, 6])]),
-                None,
             )
         );
 
@@ -1114,7 +1095,6 @@ mod test {
                 None,
                 1,
                 Some(vec![Bytes::from_static(&[1, 2, 3])]),
-                None,
             )
         );
 
@@ -1138,7 +1118,6 @@ mod test {
                 ),
                 None,
                 0,
-                None,
                 None,
             )
         );
@@ -1166,7 +1145,6 @@ mod test {
                 ),
                 None,
                 0,
-                None,
                 None,
             )
         );
@@ -1204,7 +1182,6 @@ mod test {
                 Some("[\"test-received\",123]".to_owned()),
                 None,
                 0,
-                None,
                 None,
             )
         );
