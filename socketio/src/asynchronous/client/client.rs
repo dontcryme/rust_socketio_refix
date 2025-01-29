@@ -1199,7 +1199,6 @@ mod test {
                 id: Some(_),
                 attachment_count: 0,
                 attachments: None,
-                ack_id: None,
             }
         ));
 
